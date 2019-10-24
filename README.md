@@ -1,0 +1,2 @@
+# Paddlefish
+Due to their extended life history and sensitive morphology, paddlefish are highly vulnerable to overfishing, river alterations, and to habitat and water quality. Accurate and precise aging is important for harvest and habitat management and ages are used to assess year-class strength, growth, mortality rates, and recruitment. This study evaluated different sectioning techniques to improve age estimation. Dentaries were cut into six sections and each section was compared.
