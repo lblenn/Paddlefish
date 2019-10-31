@@ -1,0 +1,65 @@
+---
+title: "Paddlefish Maps"
+subtitle: By Lauren Blenn
+output:
+  html_notebook:
+    toc: yes
+  html_document:
+    df_print: paged
+    toc: yes
+  scrolling: "smooth"
+---
+
+```{r Set up, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+packages<-c("ggsn","leaflet","mapdata","maptools","OpenStreetMap","rgdal","smoothr","sf","sp","tidyverse","tmap")
+sapply(packages, require, character.only=T)
+
+# change na. action
+options(na.action = "na.fail")
+```
+
+# Paddlefish Distributions  
+#### American Paddlefish _Polyodon spathula_  
+
+Paddlefish are found throughout the Missouri and Mississippi river basins which drain most of the central United States. Twenty-two states have paddlefish, and Montana is the most westerly state with them. Several states are trying to reintroduce them into areas where they have disappeared.   
+
+![US Paddlefish Distribution](E:/BIOL5700R/Paddlefish/PAH_US_Dist.png)  
+
+In Montana, paddlefish are found in the Yellowstone River as far upriver as Forsyth as well as the Missouri River above and below Fort Peck Dam. Fish above Fort Peck Dam (known as the Fort Peck stock) are now isolated from fish below the dam, although some upriver fish can pass downstream. An important recreational snag fishery exists for this stock in areas near the Fred Robinson Bridge. The downstream fish are part of the population inhabiting the Yellowstone River and Lake Sakakawea, known as the Yellowstone-Sakakawea stock. An important recreational snag fishery exists for this stock at Intake Diversion Dam, near Glendive.  
+
+![Montana Paddlefish Distribution](E:/BIOL5700R/Paddlefish/PAH_MT_Dist.png)  
+
+For this study, paddlefish were caught at a recreational snag fishery on the Missouri River in Montana.  
+
+```{r Map}
+state <- map_data("state")
+county <- map_data("county")
+PAH_MT_pt <- data.frame("x" = 47.630754, "y" = -108.684994)
+
+mt <- county %>% 
+  filter(region=="montana")
+
+ferg <- county %>% 
+  filter(region=="montana") %>% 
+  filter(subregion=="fergus")
+
+ggplot() + geom_polygon(data = state, aes(x=long, y = lat, group = group),
+                        fill = "white", color="black") + 
+           geom_polygon(data = mt, aes(x=long, y = lat, group = group),
+                        fill = "gray", color="black") + 
+           geom_polygon(data = ferg, aes(x=long, y = lat, group = group),
+                        fill = "red", color="black") + 
+           geom_point(data = PAH_MT_pt, aes(x=x, y=y), color="black", size=5) +
+  coord_fixed(xlim = c(-117, -103),  ylim = c(44, 50), ratio = 1.2) + 
+  xlab("Longitude") + ylab("Latitude") + ggtitle("Missouri River, Fergus Co., MT")
+```
+
+
+## Resources  
+
+[https://lblenn.github.io/Paddlefish/](My Paddlefish Website)  
+[http://fieldguide.mt.gov/speciesDetail.aspx?elcode=AFCAB01010](Montana Field Guide)  
+[https://en.wikipedia.org/wiki/Paddlefish](Wikipedia Paddlefish Page)  
+[https://units.fisheries.org/montana/science/species-of-concern/species-status/paddlefish/](Species Status)  
