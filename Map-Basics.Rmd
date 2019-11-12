@@ -2,10 +2,10 @@
 title: "Paddlefish Maps"
 subtitle: By Lauren Blenn
 output:
-  html_notebook:
-    toc: yes
   html_document:
     df_print: paged
+    toc: yes
+  html_notebook:
     toc: yes
   scrolling: "smooth"
 ---
@@ -13,7 +13,7 @@ output:
 ```{r Set up, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-packages<-c("ggsn","leaflet","mapdata","maptools","OpenStreetMap","rgdal","smoothr","sf","sp","tidyverse","tmap")
+packages<-c("ggsn","leaflet","mapdata","maptools","OpenStreetMap","rgdal","smoothr","sf","sp","tidyverse","tmap", "dismo", "rgbif", "viridis", "rasterVis", "utils", "ggplot2", "maps", "tmaptools")
 sapply(packages, require, character.only=T)
 
 # change na. action
@@ -25,11 +25,11 @@ options(na.action = "na.fail")
 
 Paddlefish are found throughout the Missouri and Mississippi river basins which drain most of the central United States. Twenty-two states have paddlefish, and Montana is the most westerly state with them. Several states are trying to reintroduce them into areas where they have disappeared.   
 
-![US Paddlefish Distribution](E:/BIOL5700R/Paddlefish/PAH_US_Dist.png)  
+![US Paddlefish Distribution](F:/BIOL5700R/Paddlefish/PAH_US_Dist.png)  
 
 In Montana, paddlefish are found in the Yellowstone River as far upriver as Forsyth as well as the Missouri River above and below Fort Peck Dam. Fish above Fort Peck Dam (known as the Fort Peck stock) are now isolated from fish below the dam, although some upriver fish can pass downstream. An important recreational snag fishery exists for this stock in areas near the Fred Robinson Bridge. The downstream fish are part of the population inhabiting the Yellowstone River and Lake Sakakawea, known as the Yellowstone-Sakakawea stock. An important recreational snag fishery exists for this stock at Intake Diversion Dam, near Glendive.  
 
-![Montana Paddlefish Distribution](E:/BIOL5700R/Paddlefish/PAH_MT_Dist.png)  
+![Montana Paddlefish Distribution](F:/BIOL5700R/Paddlefish/PAH_MT_Dist.png)  
 
 For this study, paddlefish were caught at a recreational snag fishery on the Missouri River in Montana.  
 
@@ -55,6 +55,83 @@ ggplot() + geom_polygon(data = state, aes(x=long, y = lat, group = group),
   coord_fixed(xlim = c(-117, -103),  ylim = c(44, 50), ratio = 1.2) + 
   xlab("Longitude") + ylab("Latitude") + ggtitle("Missouri River, Fergus Co., MT")
 ```
+
+
+# Simple Paddlefish Distribution Maps  
+
+```{r Simple Map}
+extent <- extent(-110,-70,20,60)
+
+pilo_dismo <- gbif("polyodon", species = "spathula", ext = extent,
+             geo = TRUE, sp = TRUE, download = TRUE,
+             removeZeros = TRUE)
+             
+pilo_xy <- as.data.frame(cbind(pilo_dismo@coords[,1],pilo_dismo@coords[,2]))
+colnames(pilo_xy) <- c("longitude","latitude")
+
+us <- map_data("state")
+
+ggplot(data = pilo_xy, aes(x=longitude, y=latitude)) +
+  geom_polygon(data = us, aes(x=long, y = lat, group = group),
+               fill = "white", color="black") +
+  geom_point() + xlab("Longitude") + ylab("Latitude") +
+  coord_fixed(xlim = c(-105,-70), ylim = c(20,50))
+```
+
+
+```{r Pretty Map}
+pilo_lu <- name_lookup(query = 'polyodon spathula', return = 'data')
+  
+pilo_taxon <- print(as.integer(names(which.max(table(pilo_lu$nubKey)))))
+  
+occ_count(taxonKey = pilo_taxon, georeferenced = TRUE)
+  
+usa <- isocodes[grep("United States", isocodes$name), "code"]
+pilo_data <- occ_search(taxonKey = pilo_taxon, 
+                   return = 'data', 
+                   country = usa, 
+                   hasCoordinate = TRUE)
+
+pilo_df <- as.data.frame(cbind(pilo_data$US$scientificName,
+                               pilo_data$US$institutionCode,
+                               pilo_data$US$stateProvince,
+                               pilo_data$US$verbatimLocality))
+
+coords <- cbind(type.convert(pilo_data[["US"]][["decimalLongitude"]], as.is = TRUE),
+                type.convert(pilo_data[["US"]][["decimalLatitude"]], as.is = TRUE))
+
+pilo_info <- cbind(pilo_df,coords)
+
+colnames(pilo_info) <- c("species","dataset","state","location","longitude","latitude")
+
+ggplot(data = pilo_info, aes(x=longitude, y=latitude)) +
+  geom_polygon(data = us, aes(x=long, y = lat, group = group),
+               fill = "white", color="black") +
+  geom_point(aes(color = species)) +
+  coord_fixed(xlim = c(-105,-70), ylim = c(25,50)) +
+  xlab("Longitude") + ylab("Latitude") + ggtitle("Paddlefish in the Eastern US") + 
+  guides(color=guide_legend("Legend")) + 
+  theme_bw() + theme(plot.title = element_text(hjust = 0.5)) + 
+  theme(legend.position = "right") +
+  theme(legend.title.align = 0.5, legend.box.just = "center") +
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank())
+```
+
+# Interactive Paddlefish Distribution Map  
+
+```{r Interactive Map}
+leaflet(pilo_info) %>% 
+  addTiles() %>% 
+  addCircleMarkers(pilo_info$longitude,
+                   pilo_info$latitude,
+                   popup = pilo_info$state,
+                   weight = 2,
+                   color = "black",
+                   fillColor = "red",
+                   fillOpacity = 0.7)
+```
+
 
 
 ## Resources  
