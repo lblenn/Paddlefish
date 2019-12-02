@@ -1,5 +1,5 @@
 ---
-title: "Paddlefish Maps"
+title: "American Paddlefish _Polyodon spathula_"
 subtitle: By Lauren Blenn
 output:
   html_document:
@@ -10,7 +10,7 @@ output:
   scrolling: "smooth"
 ---
 
-```{r Set up, include=FALSE}
+```{r Set up, message=FALSE, warning=FALSE, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
 packages<-c("ggsn","leaflet","mapdata","maptools","OpenStreetMap","rgdal","smoothr","sf","sp","tidyverse","tmap", "dismo", "rgbif", "viridis", "rasterVis", "utils", "ggplot2", "maps", "tmaptools")
@@ -20,20 +20,55 @@ sapply(packages, require, character.only=T)
 options(na.action = "na.fail")
 ```
 
-# Paddlefish Distributions  
-#### American Paddlefish _Polyodon spathula_  
+## Background Information   
+  
+Paddlefish (family Polyodontidae) are basal Chondrostean ray-finned fish. They have been referred to as "primitive fish" because they have evolved with few morphological changes since the earliest fossil records of the Late Cretaceous, seventy to seventy-five million years ago. Polyodontids are exclusively North American and Chinese.  
+  
+![American Paddlefish](E:/BIOL5700R/Paddlefish/Paddlefish.png)  
+Image: Paddlefish  
+  
+There are two extant species, the American paddlefish ( _Polyodon spathula_ ) which is native to the Mississippi River basin in the U.S. and the critically endangered Chinese paddlefish ( _Psephurus glades_ ) which is endemic to the Yangtze River Basin in China. Chinese paddlefish are also commonly referred to as "Chinese swordfish", or "elephant fish".  
+  
+Paddlefish populations have declined dramatically throughout their historic range as a result of overfishing, pollution, and the encroachment of human development, including the construction of dams that have blocked their seasonal upward migration to ancestral spawning grounds. Other detrimental effects include alterations of rivers which have changed natural flows resulting in the loss of spawning habitat and nursery areas. Chinese paddlefish have not been seen since 2007, and may now be extinct (or functionally extinct in the wild) for many of the same reasons that have plagued the American species.  
+  
+American Paddlefish are found throughout the Missouri and Mississippi river basins which drain most of the central United States. Twenty-two states have paddlefish, and Montana is the most westerly state with them. Several states are trying to reintroduce them into areas where they have disappeared.     
+  
+![US Paddlefish Distribution](E:/BIOL5700R/Paddlefish/PAH_US_Dist.png)  
+   
+   
+## Simple Paddlefish Distribution Maps   
+### US Distribution   
+```{r US Distribution Map, message=FALSE, warning=FALSE}
+extent <- extent(-110,-70,20,60)
 
-Paddlefish are found throughout the Missouri and Mississippi river basins which drain most of the central United States. Twenty-two states have paddlefish, and Montana is the most westerly state with them. Several states are trying to reintroduce them into areas where they have disappeared.   
+pilo_dismo <- gbif("polyodon", species = "spathula", ext = extent,
+             geo = TRUE, sp = TRUE, download = TRUE,
+             removeZeros = TRUE)
+             
+pilo_xy <- as.data.frame(cbind(pilo_dismo@coords[,1],pilo_dismo@coords[,2]))
+colnames(pilo_xy) <- c("longitude","latitude")
 
-![US Paddlefish Distribution](F:/BIOL5700R/Paddlefish/PAH_US_Dist.png)  
+us <- map_data("state")
 
+ggplot(data = pilo_xy, aes(x=longitude, y=latitude)) +
+  geom_polygon(data = us, aes(x=long, y = lat, group = group),
+               fill = "white", color="black") +
+  geom_point() + xlab("Longitude") + ylab("Latitude") +
+  coord_fixed(xlim = c(-105,-70), ylim = c(20,50)) + 
+  xlab("Longitude") + ylab("Latitude") + ggtitle("Paddlefish in the Eastern US") + 
+  theme_bw() + theme(plot.title = element_text(hjust = 0.5)) +
+  theme(panel.background = element_rect(fill = "lightblue"))
+```
+   
+
+### Montana Distribution Map   
 In Montana, paddlefish are found in the Yellowstone River as far upriver as Forsyth as well as the Missouri River above and below Fort Peck Dam. Fish above Fort Peck Dam (known as the Fort Peck stock) are now isolated from fish below the dam, although some upriver fish can pass downstream. An important recreational snag fishery exists for this stock in areas near the Fred Robinson Bridge. The downstream fish are part of the population inhabiting the Yellowstone River and Lake Sakakawea, known as the Yellowstone-Sakakawea stock. An important recreational snag fishery exists for this stock at Intake Diversion Dam, near Glendive.  
-
-![Montana Paddlefish Distribution](F:/BIOL5700R/Paddlefish/PAH_MT_Dist.png)  
-
-For this study, paddlefish were caught at a recreational snag fishery on the Missouri River in Montana.  
-
-```{r Map}
+   
+![Montana Paddlefish Distribution](E:/BIOL5700R/Paddlefish/PAH_MT_Dist.png)  
+   
+For this study, paddlefish were caught at a recreational snag fishery on the Missouri River in Fergus county, Montana.  
+   
+```{r MT Distribution Map, message=FALSE, warning=FALSE}
 state <- map_data("state")
 county <- map_data("county")
 PAH_MT_pt <- data.frame("x" = 47.630754, "y" = -108.684994)
@@ -51,41 +86,19 @@ ggplot() + geom_polygon(data = state, aes(x=long, y = lat, group = group),
                         fill = "gray", color="black") + 
            geom_polygon(data = ferg, aes(x=long, y = lat, group = group),
                         fill = "red", color="black") + 
-           geom_point(data = PAH_MT_pt, aes(x=x, y=y), color="black", size=5) +
-  coord_fixed(xlim = c(-117, -103),  ylim = c(44, 50), ratio = 1.2) + 
-  xlab("Longitude") + ylab("Latitude") + ggtitle("Missouri River, Fergus Co., MT")
+           geom_point(data = PAH_MT_pt, aes(x=x, y=y), color="black", size=10) +
+  coord_fixed(xlim = c(-117, -104),  ylim = c(44, 49), ratio = 1.2) + 
+  xlab("Longitude") + ylab("Latitude") + ggtitle("Missouri River, Fergus Co., MT") +
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank())
 ```
-
-
-# Simple Paddlefish Distribution Maps  
-
-```{r Simple Map}
-extent <- extent(-110,-70,20,60)
-
-pilo_dismo <- gbif("polyodon", species = "spathula", ext = extent,
-             geo = TRUE, sp = TRUE, download = TRUE,
-             removeZeros = TRUE)
-             
-pilo_xy <- as.data.frame(cbind(pilo_dismo@coords[,1],pilo_dismo@coords[,2]))
-colnames(pilo_xy) <- c("longitude","latitude")
-
-us <- map_data("state")
-
-ggplot(data = pilo_xy, aes(x=longitude, y=latitude)) +
-  geom_polygon(data = us, aes(x=long, y = lat, group = group),
-               fill = "white", color="black") +
-  geom_point() + xlab("Longitude") + ylab("Latitude") +
-  coord_fixed(xlim = c(-105,-70), ylim = c(20,50))
-```
-
-
-```{r Pretty Map}
+   
+   
+## Interactive Paddlefish Distribution Map   
+   
+```{r Interactive Map, message=FALSE, warning=FALSE}
 pilo_lu <- name_lookup(query = 'polyodon spathula', return = 'data')
-  
 pilo_taxon <- print(as.integer(names(which.max(table(pilo_lu$nubKey)))))
-  
-occ_count(taxonKey = pilo_taxon, georeferenced = TRUE)
-  
 usa <- isocodes[grep("United States", isocodes$name), "code"]
 pilo_data <- occ_search(taxonKey = pilo_taxon, 
                    return = 'data', 
@@ -104,24 +117,8 @@ pilo_info <- cbind(pilo_df,coords)
 
 colnames(pilo_info) <- c("species","dataset","state","location","longitude","latitude")
 
-ggplot(data = pilo_info, aes(x=longitude, y=latitude)) +
-  geom_polygon(data = us, aes(x=long, y = lat, group = group),
-               fill = "white", color="black") +
-  geom_point(aes(color = species)) +
-  coord_fixed(xlim = c(-105,-70), ylim = c(25,50)) +
-  xlab("Longitude") + ylab("Latitude") + ggtitle("Paddlefish in the Eastern US") + 
-  guides(color=guide_legend("Legend")) + 
-  theme_bw() + theme(plot.title = element_text(hjust = 0.5)) + 
-  theme(legend.position = "right") +
-  theme(legend.title.align = 0.5, legend.box.just = "center") +
-  theme(panel.grid.major = element_blank(), 
-        panel.grid.minor = element_blank())
-```
-
-# Interactive Paddlefish Distribution Map  
-
-```{r Interactive Map}
 leaflet(pilo_info) %>% 
+  fitBounds(-105, 25,-70, 45) %>%
   addTiles() %>% 
   addCircleMarkers(pilo_info$longitude,
                    pilo_info$latitude,
@@ -135,7 +132,7 @@ leaflet(pilo_info) %>%
 
 
 ## Resources  
-
+   
 [https://lblenn.github.io/Paddlefish/](My Paddlefish Website)  
 [http://fieldguide.mt.gov/speciesDetail.aspx?elcode=AFCAB01010](Montana Field Guide)  
 [https://en.wikipedia.org/wiki/Paddlefish](Wikipedia Paddlefish Page)  
