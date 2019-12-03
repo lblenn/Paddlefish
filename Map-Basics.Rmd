@@ -139,11 +139,11 @@ Since my code for the paddlefish didn't work, I am including code running a diff
 
 **"Growth responses of a green alga to multiple environmental drivers" by GL Brennan and S Collins**   
 
-_Abstract_   
+#### Abstract   
    
 One feature of global change is that biota must respond not to single, but to multiple environmental drivers. By growing a model photosynthetic microbe in environments containing between one and eight different drivers, including changes in CO2, temperature, and pH, in different combinations, we show that the number as well as the identities of drivers explain shifts in population growth rates. This is because the biotic response to multiple environmental drivers depends on the response to the single dominant driver, and the chance of a driver of large effect being present increases with the number of drivers. Interactions between drivers slightly counteract the expected drop in growth. Our results demonstrate that population growth declines in a predictable way with the number of environmental drivers, and provide an empirically supported model for scaling up from studies on organismal responses to single drivers to predict responses to large numbers of environmental drivers.   
    
-_Data Info_   
+#### Data Info    
 ID  :	Unique I.D. for each culture.   
 regime identity 	:	The identity of the combination of environmental drivers in each regime   
 complexity	:	Number of Environmental driver in each unique regime   
@@ -170,26 +170,18 @@ relative.fit	:	Fitness of each ID relative to the control
 change.no.cells	:	Change of the number of cells between No and Nt, per day   
 
 
-### Analysis  
+### Analysis   
 
-Authors performed some clean up and analysis of data which I will include here for data that will look and behave better.  
-
-```{r Original Author Code}
-#Import the data
+```{r Set up Code}
 data<-read.csv("E:/BIOL5700R/Paddlefish/DataDryad_mixed_model_290415.csv", header = T) 
 
-#all but CO2
 CO2<-subset(data, Co2!="yes" )
-
-#case study 
-##subset set data in order to create file with the case study regimes
 
 CO2<-subset(data,Co2=="yes")
 CO2_Temp<-subset(CO2,Temp=="yes")
 CO2_Temp_pH<-subset(CO2_Temp,pH=="yes")
 CO2_pH<-subset(data,pH=="yes")
 
-#subset complexity 1 and 2 and rbind to the CO2_Temp_pH
 cpx1<-subset(data,NED ==1)
 CO2_Temp_pH<-rbind(CO2_Temp_pH, cpx1CO2<-subset(cpx1,Co2=="yes"))
 CO2_Temp_pH<-rbind(CO2_Temp_pH, cpx1pH<-subset(cpx1,pH=="yes"))
@@ -200,48 +192,34 @@ CO2_Temp_pH<-rbind(CO2_Temp_pH, cpx2CO2pH<-subset(cpx2,Co2=="yes"& pH=="yes"))
 CO2_Temp_pH<-rbind(CO2_Temp_pH, cpx2CO2Temp<-subset(cpx2,Co2=="yes"& Temp=="yes"))
 CO2_Temp_pH<-rbind(CO2_Temp_pH, cpx2TemppH<-subset(cpx2,Temp=="yes"& pH=="yes"))
 
-#rename case
 case<-CO2_Temp_pH
 
-#To display the variables existing in data and their characteristics
 str(data)
 
-#DATA EXPLORATION 
-
-#Before undertaking any statistical analysis, it is useful to explore the data.
-#To summarize the variables in data4 type in 
 summary(data)
 
-#First to check the distribution of the dependent variable WEANWT. Type in
 boxplot(data$Rate.of.Division,ylab="Rate.of.Division")
 
-#Normality of the weight at weaning could also be checked by use of a QQplot.
 qqnorm(data$Rate.of.Division,main="NormalQ-Q Plot",ylab="Rate.of.Division")
 qqline(data$Rate.of.Division)
 ```
 
-Let's start by checking for colinearity.  
+Let's start by checking for co-linearity.  
 
-```{r Data Exploration}
-#check for colinearity
+```{r Check for Co-linearity}
 pairs(data[,2:14], lower.panel = NULL)
 ```
 
 Treatment and Regime look closely related, as do NED and Overlap, NED and Replicate, and Overlap and Replicate. Ignore Temp through P, those are subsets of Regime and are included, I just couldn't figure out how to pull them out of the code. So let's start with a model with all parameters.  
 
 ```{r All Parameters Aboard}
-# fit model with all parameters
 all<-lm(perDay ~ treatment + NED + regime + overlap + replicate, data = data)
 
-# the dredge function fits all combinations
-# of the variables in the GPA.all.parms model fit above
 results<-dredge(all)
 results
 
-# grab best supported models
 subset(results, delta <5)
 
-# calculate variable importance weights
 importance(results)
 ```
 
