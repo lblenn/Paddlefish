@@ -9,7 +9,7 @@ Due to their extended life history and sensitive morphology, paddlefish are high
 
 # Link to GitHub.io page  
 
-[https://lblenn.github.io/Paddlefish/](Github Page)  
+[https://lblenn.github.io/Paddlefish](Github Page)  
 
 
 # Respository Description  
