@@ -12,7 +12,7 @@ output:
 ```{r Set up, message=FALSE, warning=FALSE, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-packages<-c("ggsn","leaflet","mapdata","maptools","OpenStreetMap","rgdal","smoothr","sf","sp","tidyverse","tmap", "dismo", "rgbif", "viridis", "rasterVis", "utils", "ggplot2", "maps", "tmaptools", "dplyr", "lme4", "lmerTest", "MuMIn", "readr", "lubridate")
+packages<-c("ggsn","leaflet","mapdata","maptools","OpenStreetMap","rgdal","smoothr","sf","sp","tidyverse","tmap", "dismo", "rgbif", "viridis", "rasterVis", "utils", "ggplot2", "maps", "tmaptools", "dplyr", "lme4", "lmerTest", "MuMIn", "readr", "lubridate", "plyr", "Matrix", "plotrix")
 sapply(packages, require, character.only=T)
 
 # change na. action
@@ -128,8 +128,132 @@ leaflet(pilo_info) %>%
                    fillOpacity = 0.7)
 ```
 
-## Paddlefish Age Technique Analysis
-Unfortunately, none of my code for my analysis worked.
+## Paddlefish Age Technique Analysis   
+Unfortunately, none of my code for my analysis worked.   
+   
+## Alternate Analysis   
+Since my code for the paddlefish didn't work, I am including code running a different analysis.   
+   
+### About the Data   
+[https://datadryad.org/stash/dataset/doi:10.5061/dryad.jt1fb](Dryad Dataset URL) 
+
+**"Growth responses of a green alga to multiple environmental drivers" by GL Brennan and S Collins**   
+
+_Abstract_   
+   
+One feature of global change is that biota must respond not to single, but to multiple environmental drivers. By growing a model photosynthetic microbe in environments containing between one and eight different drivers, including changes in CO2, temperature, and pH, in different combinations, we show that the number as well as the identities of drivers explain shifts in population growth rates. This is because the biotic response to multiple environmental drivers depends on the response to the single dominant driver, and the chance of a driver of large effect being present increases with the number of drivers. Interactions between drivers slightly counteract the expected drop in growth. Our results demonstrate that population growth declines in a predictable way with the number of environmental drivers, and provide an empirically supported model for scaling up from studies on organismal responses to single drivers to predict responses to large numbers of environmental drivers.   
+   
+_Data Info_   
+ID  :	Unique I.D. for each culture.   
+regime identity 	:	The identity of the combination of environmental drivers in each regime   
+complexity	:	Number of Environmental driver in each unique regime   
+regime	:	Unique number for each combination of environmental drivers   
+Temp	:	Yes/No if regime contains the environmental driver temperature   
+Co2	:	Yes/No if regime contains the environmental driver CO2   
+Herb	:	Yes/No if regime contains the environmental driver Herbicide   
+uv	:	Yes/No if regime contains the environmental driver UV   
+Li	:	Yes/No if regime contains the environmental driver Light intensity    
+pH	:	Yes/No if regime contains the environmental driver pH    
+ND	:	Yes/No if regime contains the environmental driver nutrient depletion   
+P	:	Yes/No if regime contains the environmental driver reduced phosphate   
+overlap	:	The average overlap of environmental drivers between regimes, within each complexity level    
+replicate	:	The replicate number of each ID   
+count.ml.Nt	:	The number of cells.mL at Nt   
+logcount.Nt	:	The number of cells.mL at Nt logged   
+count.ml.No	:	The number of cells.mL at No    
+logcount.No	:	The number of cells.mL at No logged   
+Rate of Division	:	The rate of cell division   
+risk.Extinction	:	The rate of extinction    
+no.divisions	:	The number of divisions   
+perDay	:	The number of divisions per day   
+relative.fit	:	Fitness of each ID relative to the control    
+change.no.cells	:	Change of the number of cells between No and Nt, per day   
+
+
+### Analysis  
+
+Authors performed some clean up and analysis of data which I will include here for data that will look and behave better.  
+
+```{r Original Author Code}
+#Import the data
+data<-read.csv("E:/BIOL5700R/Paddlefish/DataDryad_mixed_model_290415.csv", header = T) 
+
+#all but CO2
+CO2<-subset(data, Co2!="yes" )
+
+#case study 
+##subset set data in order to create file with the case study regimes
+
+CO2<-subset(data,Co2=="yes")
+CO2_Temp<-subset(CO2,Temp=="yes")
+CO2_Temp_pH<-subset(CO2_Temp,pH=="yes")
+CO2_pH<-subset(data,pH=="yes")
+
+#subset complexity 1 and 2 and rbind to the CO2_Temp_pH
+cpx1<-subset(data,NED ==1)
+CO2_Temp_pH<-rbind(CO2_Temp_pH, cpx1CO2<-subset(cpx1,Co2=="yes"))
+CO2_Temp_pH<-rbind(CO2_Temp_pH, cpx1pH<-subset(cpx1,pH=="yes"))
+CO2_Temp_pH<-rbind(CO2_Temp_pH, cpx1Temp<-subset(cpx1,Temp=="yes"))
+
+cpx2<-subset(data,NED ==2)
+CO2_Temp_pH<-rbind(CO2_Temp_pH, cpx2CO2pH<-subset(cpx2,Co2=="yes"& pH=="yes"))
+CO2_Temp_pH<-rbind(CO2_Temp_pH, cpx2CO2Temp<-subset(cpx2,Co2=="yes"& Temp=="yes"))
+CO2_Temp_pH<-rbind(CO2_Temp_pH, cpx2TemppH<-subset(cpx2,Temp=="yes"& pH=="yes"))
+
+#rename case
+case<-CO2_Temp_pH
+
+#To display the variables existing in data and their characteristics
+str(data)
+
+#DATA EXPLORATION 
+
+#Before undertaking any statistical analysis, it is useful to explore the data.
+#To summarize the variables in data4 type in 
+summary(data)
+
+#First to check the distribution of the dependent variable WEANWT. Type in
+boxplot(data$Rate.of.Division,ylab="Rate.of.Division")
+
+#Normality of the weight at weaning could also be checked by use of a QQplot.
+qqnorm(data$Rate.of.Division,main="NormalQ-Q Plot",ylab="Rate.of.Division")
+qqline(data$Rate.of.Division)
+```
+
+Let's start by checking for colinearity.  
+
+```{r Data Exploration}
+#check for colinearity
+pairs(data[,2:14], lower.panel = NULL)
+```
+
+Treatment and Regime look closely related, as do NED and Overlap, NED and Replicate, and Overlap and Replicate. Ignore Temp through P, those are subsets of Regime and are included, I just couldn't figure out how to pull them out of the code. So let's start with a model with all parameters.  
+
+```{r All Parameters Aboard}
+# fit model with all parameters
+all<-lm(perDay ~ treatment + NED + regime + overlap + replicate, data = data)
+
+# the dredge function fits all combinations
+# of the variables in the GPA.all.parms model fit above
+results<-dredge(all)
+results
+
+# grab best supported models
+subset(results, delta <5)
+
+# calculate variable importance weights
+importance(results)
+```
+
+Replicate doesn't seem to be a useful predictor, let's drop it.   
+
+```{r Minus Replicates}
+results<-dredge(all, subset= !(replicate))
+results
+```
+
+Models 17-24 all have equal explanatory power.   
+
 
 
 ## Resources  
@@ -138,3 +262,4 @@ Unfortunately, none of my code for my analysis worked.
 [http://fieldguide.mt.gov/speciesDetail.aspx?elcode=AFCAB01010](Montana Field Guide)  
 [https://en.wikipedia.org/wiki/Paddlefish](Wikipedia Paddlefish Page)  
 [https://units.fisheries.org/montana/science/species-of-concern/species-status/paddlefish/](Species Status)  
+[https://datadryad.org/stash/dataset/doi:10.5061/dryad.jt1fb](Dryad Dataset Page)
