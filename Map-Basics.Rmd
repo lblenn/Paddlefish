@@ -4,8 +4,6 @@ subtitle: By Lauren Blenn
 output:
   html_document:
     df_print: paged
-    toc: yes
-  html_notebook:
     theme: united
     toc: yes
     toc_float: yes
@@ -131,7 +129,7 @@ leaflet(pilo_info) %>%
 ```
 
 ## Paddlefish Age Technique Analysis
-
+Unfortunately, none of my code for my analysis worked.
 
 
 ## Resources  
