@@ -6,14 +6,15 @@ output:
     df_print: paged
     toc: yes
   html_notebook:
+    theme: united
     toc: yes
-  scrolling: "smooth"
+    toc_float: yes
 ---
 
 ```{r Set up, message=FALSE, warning=FALSE, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-packages<-c("ggsn","leaflet","mapdata","maptools","OpenStreetMap","rgdal","smoothr","sf","sp","tidyverse","tmap", "dismo", "rgbif", "viridis", "rasterVis", "utils", "ggplot2", "maps", "tmaptools")
+packages<-c("ggsn","leaflet","mapdata","maptools","OpenStreetMap","rgdal","smoothr","sf","sp","tidyverse","tmap", "dismo", "rgbif", "viridis", "rasterVis", "utils", "ggplot2", "maps", "tmaptools", "dplyr", "lme4", "lmerTest", "MuMIn", "readr", "lubridate")
 sapply(packages, require, character.only=T)
 
 # change na. action
@@ -25,7 +26,7 @@ options(na.action = "na.fail")
 Paddlefish (family Polyodontidae) are basal Chondrostean ray-finned fish. They have been referred to as "primitive fish" because they have evolved with few morphological changes since the earliest fossil records of the Late Cretaceous, seventy to seventy-five million years ago. Polyodontids are exclusively North American and Chinese.  
   
 ![American Paddlefish](E:/BIOL5700R/Paddlefish/Paddlefish.png)  
-Image: Paddlefish  
+_Image: Paddlefish swimming in stream._   
   
 There are two extant species, the American paddlefish ( _Polyodon spathula_ ) which is native to the Mississippi River basin in the U.S. and the critically endangered Chinese paddlefish ( _Psephurus glades_ ) which is endemic to the Yangtze River Basin in China. Chinese paddlefish are also commonly referred to as "Chinese swordfish", or "elephant fish".  
   
@@ -128,6 +129,8 @@ leaflet(pilo_info) %>%
                    fillColor = "red",
                    fillOpacity = 0.7)
 ```
+
+## Paddlefish Age Technique Analysis
 
 
 
